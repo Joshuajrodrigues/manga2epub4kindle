@@ -1,0 +1,98 @@
+{
+  "0 debug pnpm:scope": {
+    "selected": 1
+  },
+  "1 debug pnpm:package-manifest": {
+    "initial": {
+      "name": "mangler",
+      "version": "1.0.0",
+      "description": "",
+      "main": "index.js",
+      "type": "module",
+      "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+      },
+      "keywords": [],
+      "author": "",
+      "license": "ISC"
+    },
+    "prefix": "C:\\Users\\rodri\\OneDrive\\Desktop\\mangler"
+  },
+  "2 debug pnpm:context": {
+    "currentLockfileExists": false,
+    "storeDir": "C:\\Users\\rodri\\AppData\\Local\\pnpm\\store\\v3",
+    "virtualStoreDir": "C:\\Users\\rodri\\OneDrive\\Desktop\\mangler\\node_modules\\.pnpm"
+  },
+  "3 debug pnpm:stage": {
+    "prefix": "C:\\Users\\rodri\\OneDrive\\Desktop\\mangler",
+    "stage": "resolution_started"
+  },
+  "4 debug pnpm:_dependency_resolved": {
+    "resolution": "registry.npmjs.org/chalk/5.2.0",
+    "wanted": {
+      "dependentId": ".",
+      "name": "chalk",
+      "rawSpec": "latest"
+    }
+  },
+  "5 debug pnpm:progress": {
+    "packageId": "registry.npmjs.org/chalk/5.2.0",
+    "requester": "C:\\Users\\rodri\\OneDrive\\Desktop\\mangler",
+    "status": "resolved"
+  },
+  "6 debug pnpm:fetching-progress": {
+    "attempt": 1,
+    "packageId": "registry.npmjs.org/chalk/5.2.0",
+    "size": 13351,
+    "status": "started"
+  },
+  "7 debug pnpm:_dependency_resolved": {
+    "resolution": "registry.npmjs.org/figlet/1.5.2",
+    "wanted": {
+      "dependentId": ".",
+      "name": "figlet",
+      "rawSpec": "latest"
+    }
+  },
+  "8 debug pnpm:progress": {
+    "packageId": "registry.npmjs.org/figlet/1.5.2",
+    "requester": "C:\\Users\\rodri\\OneDrive\\Desktop\\mangler",
+    "status": "resolved"
+  },
+  "9 debug pnpm:_dependency_resolved": {
+    "resolution": "registry.npmjs.org/nanospinner/1.1.0",
+    "wanted": {
+      "dependentId": ".",
+      "name": "nanospinner",
+      "rawSpec": "latest"
+    }
+  },
+  "10 debug pnpm:progress": {
+    "packageId": "registry.npmjs.org/nanospinner/1.1.0",
+    "requester": "C:\\Users\\rodri\\OneDrive\\Desktop\\mangler",
+    "status": "resolved"
+  },
+  "11 error pnpm": {
+    "code": "ERR_PNPM_FETCH_404",
+    "hint": "chalk-animations is not in the npm registry, or you have no permission to fetch it.\n\nNo authorization header was set for the request.",
+    "request": {
+      "url": "https://registry.npmjs.org/chalk-animations"
+    },
+    "response": {
+      "size": 0
+    },
+    "pkgName": "chalk-animations",
+    "spec": {
+      "fetchSpec": "latest",
+      "name": "chalk-animations",
+      "type": "tag"
+    },
+    "pkgsStack": [],
+    "err": {
+      "name": "pnpm",
+      "message": "GET https://registry.npmjs.org/chalk-animations: Not Found - 404",
+      "code": "ERR_PNPM_FETCH_404",
+      "stack": "pnpm: GET https://registry.npmjs.org/chalk-animations: Not Found - 404\n    at RetryOperation._fn (C:\\Users\\rodri\\AppData\\Roaming\\nvm\\v16.15.1\\node_modules\\pnpm\\dist\\pnpm.cjs:85463:19)\n    at processTicksAndRejections (node:internal/process/task_queues:96:5)"
+    }
+  }
+}

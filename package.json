@@ -1,0 +1,36 @@
+{
+  "name": "mangapub",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.2.0",
+    "chalk-animation": "^2.0.3",
+    "figlet": "^1.5.2",
+    "gradient-string": "^2.0.2",
+    "inquirer": "^9.1.4",
+    "jimp": "^0.16.2",
+    "nanospinner": "^1.1.0",
+    "nodepub": "https://github.com/Joshuajrodrigues/nodepub/tarball/23ec2d034eddb6f9c6e632204ee370de6ffcb3b3",
+    "nyaapi": "^2.4.4",
+    "sharp": "^0.31.2",
+    "unzip": "^0.1.11",
+    "webtorrent": "^1.9.6"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "pnpm": {
+    "overrides": {
+      "graceful-fs": "^4.2.10"
+    }
+  }
+}
