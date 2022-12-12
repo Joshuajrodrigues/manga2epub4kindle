@@ -117,10 +117,10 @@ const convertToEpub = async (filename, index) => {
   files.forEach((image, index) => {
     epub.addSection(
       `Page ${index}`,
-      `<img width="1072" height="1448" src='../images/${image}' />`
+      `<img width="100vw" height="100vh" src='../images/${image}' />`
     );
   });
-  await epub.writeEPUB("./epub", filename.replace(".zip", '')).then(() => {
+  await epub.writeEPUB("./epub", filename.replace(".zip", '').replace(".cbz", '')).then(() => {
     rmSync(`./extracted/${filename}`, { recursive: true });
   });
 };
