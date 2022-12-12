@@ -152,6 +152,7 @@ const unziper = async (filePath, filename, index) => {
     )
     .on("close", async () => {
       await processImage(`./extracted/${filename}`, filename);
+      await readExtracted();
     });
 };
 
@@ -209,21 +210,26 @@ const readDirectory = async () => {
 
   let dir = join(__dirname, "./testDir");
   let files = readdirSync(dir);
-  files.map(async (file, index) => {
-    await unziper(join(dir, file), file, index);
-  });
+  for(let i in files){
+    let file = files[i]
+    
+    await unziper(join(dir, file), file, i);
+   
+  }
   
 };
 
 const readExtracted = async () => {
   let dir = join(__dirname, "./extracted");
   let files = readdirSync(dir);
-  files.map(async (file, index) => {
-    convertToEpub(file, index);
-  });
-  console.log("done");
+  for(let i in files){
+    let file = files[i]
+   
+      convertToEpub(file, i);
+  
+  }
+  //console.log("done");
 };
 
 await welcome();
 await readDirectory();
-await readExtracted();
