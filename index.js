@@ -1,46 +1,45 @@
 #!/usr/bin/env node
 import chalk from "chalk";
-import figlet from "figlet";
-import { createReadStream, readdirSync, rmSync, unlink } from "fs";
-import gradient from "gradient-string";
-import inquirer from "inquirer";
-import { si, pantsu } from "nyaapi";
-import { dirname, join } from "path";
-import webTorrent from "webtorrent";
-import { fileURLToPath } from "url";
-import unzip from "unzip";
-import nodepub from "nodepub";
 import chalkAnimation from "chalk-animation";
+import { createReadStream, readdirSync, rmSync, unlink } from "fs";
+import inquirer from "inquirer";
+import nodepub from "nodepub";
+import { dirname, join } from "path";
 import sharp from "sharp";
+import unzipper from "unzipper";
+import { fileURLToPath } from "url";
 
-sharp.cache(false);
+// sharp.cache(false);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let seatchTerm = "";
-let searchResuls = [];
+
 let metaDataAnswers = {
   series: "",
   author: "",
 };
 
-const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms))
 
 const welcome = async () => {
-  const msg = "Welcome to Mangler";
-  const intro = chalkAnimation.pulse(msg);
+  const intro = chalkAnimation.rainbow("Welcome to Mangapub 🍺");
   await sleep();
   intro.stop();
+  console.log(`
+    ${chalk.redBright('Make sure you ran me in a folder full of cbr/cbz files.')}
+  `)
 };
 
 const processImage = async (path, filename) => {
   console.log(chalk.greenBright("Processing images..."));
   let dir = join(__dirname, path);
   let files = readdirSync(dir);
-  files?.map((file, index) => {
-    sharp(join(dir, file))
+  for (let i in files) {
+    let file = files[i]
+    await sharp(join(dir, file))
+      .trim()
       .metadata()
-      .then(({ width, height }) => {
+      .then(async ({ width, height }) => {
         // width > height
         if (width > height) {
           sharp(join(dir, file))
@@ -56,17 +55,41 @@ const processImage = async (path, filename) => {
                 )
                 .then(() => {
                   //remove original
+                  files.splice(i, 1)
                   unlink(`./extracted/${filename}/${file}`, (err) => {
                     if (err) throw err;
-                    else return true
+
                   });
                 });
             });
         }
-      });
-  });
-  
+
+      })
+    // .then(() => {
+    //   console.log("done processing")
+
+    // });
+  }
+
+  for (let i in files) {
+    let file = files[i]
+    let trimmed = await sharp(join(dir, file))
+      .trim()
+      .toBuffer();
+    await sharp(trimmed)
+      .toFile(`./extracted/${filename}/${file}`)
+    // .then(() => {
+    //   console.log("done trimming", file)
+
+    // })
+  }
+
+
+  readExtracted()
+
 };
+
+
 const convertToEpub = async (filename, index) => {
   console.log(chalk.greenBright("Converting to Epub..."));
 
@@ -97,21 +120,21 @@ const convertToEpub = async (filename, index) => {
       `<img width="1072" height="1448" src='../images/${image}' />`
     );
   });
-  await epub.writeEPUB("./epub", filename).then(() => {
+  await epub.writeEPUB("./epub", filename.replace(".zip", '')).then(() => {
     rmSync(`./extracted/${filename}`, { recursive: true });
   });
 };
 
 const unziper = async (filePath, filename, index) => {
   console.log(chalk.greenBright("Extracting images..."));
-  const stream = createReadStream(filePath).pipe(
-    unzip.Extract({
+  createReadStream(filePath)
+    .pipe(unzipper.Extract({
       path: `./extracted/${filename}`,
+    }))
+    .on('close', async () => {
+      await processImage(`./extracted/${filename}`, filename);
+
     })
-  );
-  stream.on("close", async () => {
-    await processImage(`./extracted/${filename}`, filename)
-  });
 };
 
 const metaDataQuestions = async () => {
@@ -119,16 +142,45 @@ const metaDataQuestions = async () => {
     name: "series",
     type: "input",
     message: "Enter series name",
+    default() {
+      return ''
+    }
   });
   let q2 = await inquirer.prompt({
     name: "author",
     type: "input",
     message: "Enter author name",
+    default() {
+      return ''
+    }
   });
-
+  let q3 = await inquirer.prompt({
+    name: "genre",
+    type: "input",
+    message: "Enter Genre name",
+    default() {
+      return ''
+    }
+  });
+  let q4 = await inquirer.prompt({
+    name: "publisher",
+    type: "input",
+    message: "Enter publisher name",
+    default() {
+      return ''
+    }
+  });
+  let q5 = await inquirer.prompt({
+    name: "kindle",
+    type: "list",
+    message: "Select your kindle",
+    choices: ["Paperwhite 11th gen", "Basic Kindle"],
+    default() {
+      return "Paperwhite 11th gen"
+    }
+  });
   // select kindle
   // add genre
-  // add tags
   // add publisher
   metaDataAnswers.author = q2.author;
   metaDataAnswers.series = q1.series;
@@ -139,58 +191,22 @@ const readDirectory = async () => {
 
   let dir = join(__dirname, "./testDir");
   let files = readdirSync(dir);
-  files.map(async(file, index) =>{ 
+  files.map(async (file, index) => {
     await unziper(join(dir, file), file, index)
-    await convertToEpub(file, index);
-});
+  });
 };
+
+const readExtracted = async () => {
+
+  let dir = join(__dirname, "./extracted");
+  let files = readdirSync(dir);
+  files.map(async (file, index) => {
+    convertToEpub(file, index)
+  });
+  console.log("done")
+};
+
+
 
 await welcome();
-await sleep(100);
 await readDirectory();
-
-const searchManga = async () => {
-  let answer = await inquirer.prompt({
-    name: "mangaSearchTerm",
-    type: "input",
-    message: "Enter Search Term :",
-  });
-  seatchTerm = answer.mangaSearchTerm;
-};
-const webTorrentClient = async (torrent) => {
-  const client = new webTorrent();
-  const magnetUri = torrent.magnet;
-  client.add(magnetUri, { path: "./torrents" }, function (torrent) {
-    torrent.on("done", () => {
-      console.log("torrent download finished.");
-    });
-  });
-};
-
-const searchResults = async (data) => {
-  let answer = await inquirer.prompt({
-    name: "magnetLink",
-    type: "rawlist",
-    message: "Choose",
-    choices: [...data],
-  });
-  let torrent = await searchResuls.find(
-    (item) => item.id + "==" + item.name == answer.magnetLink
-  );
-  await webTorrentClient(torrent);
-};
-const display = async () => {
-  let sd = [];
-  if (seatchTerm) {
-    si.search(seatchTerm, 20, {
-      filter: 1,
-      category: "3_1",
-    })
-      .then(async (data) => {
-        searchResuls = data;
-        sd = data.map((item) => item.id + "==" + item.name);
-        await searchResults(sd);
-      })
-      .catch((err) => console.log(err));
-  }
-};
