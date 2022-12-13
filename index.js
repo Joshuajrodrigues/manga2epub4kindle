@@ -34,7 +34,6 @@ const welcome = async () => {
 };
 
 const processImage = async (path, filename) => {
-
   let dir = join(__dirname, path);
   let files = readdirSync(dir);
   //  console.log("batch",files.length)
@@ -48,20 +47,22 @@ const processImage = async (path, filename) => {
       .then(async ({ width, height }) => {
         // width > height
         if (width > height) {
+          //console.log(width,height,file)
           await sharp(imageBuffer)
             // divide into 2 parts 0 to width/2 and width/2 to width
-            .extract({ width: Math.round(width / 2), height, left: 0, top: 0 })
+            .extract({ width: width / 2, height, left: 0, top: 0 })
             //add these 2 images instead of the original
             .grayscale()
-            .trim()
-            .png({ quality: 80 })
+            //.trim()
+            .png({ quality: 70 })
             .toFile(`./extracted/${filename}/${file}`.replace(".png", "-2.png"))
             .then(async () => {
+              //console.log("i run",file)
               await sharp(imageBuffer)
-                .extract({ width: Math.round(width / 2), height, left: Math.round(width / 2), top: 0 })
+                .extract({ width: width / 2, height, left: width / 2, top: 0 })
                 .grayscale()
-                .trim()
-                .png({ quality: 80 })
+                //.trim()
+                .png({ quality: 70 })
                 .toFile(
                   `./extracted/${filename}/${file}`.replace(".png", "-1.png")
                 )
@@ -78,9 +79,10 @@ const processImage = async (path, filename) => {
           sharp(imageBuffer)
             .grayscale()
             .trim()
-            .png({ quality: 80 }).toFile(`./extracted/${filename}/${file}`)
+            .png({ quality: 70 })
+            .toFile(`./extracted/${filename}/${file}`);
         }
-      })
+      });
     // .then(() => {
     //   console.log("done processing")
 
@@ -103,7 +105,7 @@ const processImage = async (path, filename) => {
 
 const convertToEpub = async (filename, index) => {
   // console.log(chalk.greenBright("Converting to Epub..."));
-  let sequence = metaDataAnswers.startIndex || 0 + index
+  let sequence = metaDataAnswers.startIndex || 0 + index;
   let dir = join(__dirname, `./extracted/${filename}`);
   let files = readdirSync(dir);
   let cover = join(dir, files[0]);
@@ -124,10 +126,10 @@ const convertToEpub = async (filename, index) => {
     showContents: false,
     images: images,
 
-    pageDirection: 'rtl',
+    pageDirection: "rtl",
     originalResWidth: 1072,
     originalResHeight: 1448,
-    kindleComicConverter: true
+    kindleComicConverter: true,
   };
 
   let epub = nodepub.document(metadata);
@@ -159,7 +161,9 @@ const convertToEpub = async (filename, index) => {
 };
 
 const unziper = async (filePath, filename, index) => {
-  const extractingImage = createSpinner(chalk.magentaBright("Extracting images...")).start()
+  const extractingImage = createSpinner(
+    chalk.magentaBright("Extracting images...")
+  ).start();
   // console.log(chalk.greenBright("Extracting images..."));
   createReadStream(filePath)
     .pipe(
@@ -168,18 +172,23 @@ const unziper = async (filePath, filename, index) => {
       })
     )
     .on("close", async () => {
-      extractingImage.success()
-      const processingImage = createSpinner(chalk.yellowBright("Processing images...")).start()
+      extractingImage.success();
+      const processingImage = createSpinner(
+        chalk.yellowBright("Processing images...")
+      ).start();
       await processImage(`./extracted/${filename}`, filename);
-      processingImage.success()
-      const toEpub = createSpinner(chalk.blueBright(`Converting ${filename} to epub...`)).start()
+      processingImage.success();
+      const toEpub = createSpinner(
+        chalk.blueBright(`Converting ${filename} to epub...`)
+      ).start();
       await convertToEpub(filename, index);
-      toEpub.success()
-    }).on("error", (err) => {
-      extractingImage.error({
-        text: err || "Something went wrong."
-      })
+      toEpub.success();
     })
+    .on("error", (err) => {
+      extractingImage.error({
+        text: err || "Something went wrong.",
+      });
+    });
 };
 
 const metaDataQuestions = async () => {
@@ -203,8 +212,25 @@ const metaDataQuestions = async () => {
     name: "genre",
     type: "checkbox",
     message: "Enter Genre name",
-    choices: ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Historical", "Horror", "Mecha", "Mystery",
-      "One shot", "Overpowered MC", "Sci-fi", "Shonen", "Slice of life", "Supernatural", "Time travel", "Other"],
+    choices: [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Drama",
+      "Fantasy",
+      "Historical",
+      "Horror",
+      "Mecha",
+      "Mystery",
+      "One shot",
+      "Overpowered MC",
+      "Sci-fi",
+      "Shonen",
+      "Slice of life",
+      "Supernatural",
+      "Time travel",
+      "Other",
+    ],
     default() {
       return "";
     },
@@ -234,16 +260,16 @@ const metaDataQuestions = async () => {
     type: "text",
     message: "Select start index for series",
     default() {
-      return "0"
-    }
-  })
+      return "0";
+    },
+  });
   metaDataAnswers.author = q2.author;
   metaDataAnswers.series = q1.series;
   metaDataAnswers.genre = q3.genre;
   metaDataAnswers.publisher = q4.publisher;
   metaDataAnswers.kindle = q5.kindle;
   metaDataAnswers.startIndex = q6.startIndex;
-  console.log("Your metadata: ", metaDataAnswers)
+  console.log("Your metadata: ", metaDataAnswers);
 };
 
 const readDirectory = async () => {
@@ -252,15 +278,11 @@ const readDirectory = async () => {
   let dir = join(__dirname, "./testDir");
   let files = readdirSync(dir);
   for (let i in files) {
-    let file = files[i]
+    let file = files[i];
 
     await unziper(join(dir, file), file, i);
-
   }
-
 };
-
-
 
 await welcome();
 await readDirectory();
