@@ -37,11 +37,11 @@ const processImage = async (path, filename) => {
 
   let dir = join(__dirname, path);
   let files = readdirSync(dir);
-//  console.log("batch",files.length)
+  //  console.log("batch",files.length)
   for (let i in files) {
     let file = files[i];
 
-    let imageBuffer = await sharp(join(dir, file)).grayscale().trim().png({ quality: 85 }).toBuffer();
+    let imageBuffer = await sharp(join(dir, file)).toBuffer();
 
     await sharp(imageBuffer)
       .metadata()
@@ -52,16 +52,22 @@ const processImage = async (path, filename) => {
             // divide into 2 parts 0 to width/2 and width/2 to width
             .extract({ width: Math.round(width / 2), height, left: 0, top: 0 })
             //add these 2 images instead of the original
+            .grayscale()
+            .trim()
+            .png({ quality: 80 })
             .toFile(`./extracted/${filename}/${file}`.replace(".png", "-2.png"))
-            .then(async() => {
+            .then(async () => {
               await sharp(imageBuffer)
                 .extract({ width: Math.round(width / 2), height, left: Math.round(width / 2), top: 0 })
+                .grayscale()
+                .trim()
+                .png({ quality: 80 })
                 .toFile(
                   `./extracted/${filename}/${file}`.replace(".png", "-1.png")
                 )
-                .then(async() => {
+                .then(async () => {
                   //remove original
-                 // console.log("removing",file)
+                  // console.log("removing",file)
                   files.splice(i, 1);
                   unlink(`./extracted/${filename}/${file}`, (err) => {
                     if (err) throw err;
@@ -69,7 +75,10 @@ const processImage = async (path, filename) => {
                 });
             });
         } else {
-          sharp(imageBuffer).toFile(`./extracted/${filename}/${file}`)
+          sharp(imageBuffer)
+            .grayscale()
+            .trim()
+            .png({ quality: 80 }).toFile(`./extracted/${filename}/${file}`)
         }
       })
     // .then(() => {
@@ -115,10 +124,10 @@ const convertToEpub = async (filename, index) => {
     showContents: false,
     images: images,
 
-    pageDirection:'rtl',
-    originalResWidth:1072,
-    originalResHeight:1448,
-    kindleComicConverter:true
+    pageDirection: 'rtl',
+    originalResWidth: 1072,
+    originalResHeight: 1448,
+    kindleComicConverter: true
   };
 
   let epub = nodepub.document(metadata);
@@ -151,7 +160,7 @@ const convertToEpub = async (filename, index) => {
 
 const unziper = async (filePath, filename, index) => {
   const extractingImage = createSpinner(chalk.magentaBright("Extracting images...")).start()
- // console.log(chalk.greenBright("Extracting images..."));
+  // console.log(chalk.greenBright("Extracting images..."));
   createReadStream(filePath)
     .pipe(
       unzipper.Extract({
@@ -242,13 +251,13 @@ const readDirectory = async () => {
 
   let dir = join(__dirname, "./testDir");
   let files = readdirSync(dir);
-  for(let i in files){
+  for (let i in files) {
     let file = files[i]
-    
+
     await unziper(join(dir, file), file, i);
-   
+
   }
-  
+
 };
 
 
