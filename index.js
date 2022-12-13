@@ -53,7 +53,7 @@ const processImage = async (path, filename) => {
             .extract({ width: width / 2, height, left: 0, top: 0 })
             //add these 2 images instead of the original
             .grayscale()
-            .png({ quality: 70 })
+            .png({ quality: 5 })
             .toBuffer();
           await sharp(left)
             .trim()
@@ -63,7 +63,7 @@ const processImage = async (path, filename) => {
               let right = await sharp(imageBuffer)
                 .extract({ width: width / 2, height, left: width / 2, top: 0 })
                .grayscale()
-                .png({ quality: 70 })
+                .png({ quality: 5 })
                 .toBuffer();
               await sharp(right)
                 .trim()
@@ -83,7 +83,7 @@ const processImage = async (path, filename) => {
           sharp(imageBuffer)
             .grayscale()
             .trim()
-            .png({ quality: 70 })
+            .png({ quality: 5 })
             .toFile(`./extracted/${filename}/${file}`);
         }
       });
@@ -109,7 +109,7 @@ const processImage = async (path, filename) => {
 
 const convertToEpub = async (filename, index) => {
   // console.log(chalk.greenBright("Converting to Epub..."));
-  let sequence = metaDataAnswers.startIndex || 0 + index;
+  let sequence = (metaDataAnswers.startIndex || 0) + index;
   let dir = join(__dirname, `./extracted/${filename}`);
   let files = readdirSync(dir);
   let cover = join(dir, files[0]);
