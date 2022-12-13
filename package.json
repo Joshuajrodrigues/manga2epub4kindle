@@ -9,24 +9,17 @@
     "dev": "nodemon index.js"
   },
   "keywords": [],
-  "author": "",
+  "bin": "index.js",
+  "author": "Joshua J Rodrigues",
   "license": "ISC",
   "dependencies": {
     "chalk": "^5.2.0",
     "chalk-animation": "^2.0.3",
-    "figlet": "^1.5.2",
-    "gradient-string": "^2.0.2",
     "inquirer": "^9.1.4",
-    "jimp": "^0.16.2",
-    "multispinner": "^0.2.1",
     "nanospinner": "^1.1.0",
     "nodepub": "https://github.com/kcartlidge/nodepub/tarball/e0faf20a7ecfa5672a92b7e661327677706f58d1",
-    "nyaapi": "^2.4.4",
     "sharp": "^0.31.2",
-    "unzip": "^0.1.11",
-    "unzipper": "^0.10.11",
-    "webtorrent": "^1.9.6",
-    "yauzl": "^2.10.0"
+    "unzipper": "^0.10.11"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
