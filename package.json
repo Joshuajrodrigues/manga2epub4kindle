@@ -18,6 +18,7 @@
     "gradient-string": "^2.0.2",
     "inquirer": "^9.1.4",
     "jimp": "^0.16.2",
+    "multispinner": "^0.2.1",
     "nanospinner": "^1.1.0",
     "nodepub": "https://github.com/kcartlidge/nodepub/tarball/e0faf20a7ecfa5672a92b7e661327677706f58d1",
     "nyaapi": "^2.4.4",

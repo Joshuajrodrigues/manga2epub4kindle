@@ -4,6 +4,7 @@ import chalkAnimation from "chalk-animation";
 import { error } from "console";
 import { createReadStream, readdirSync, rmSync, unlink } from "fs";
 import inquirer from "inquirer";
+import Multispinner from "multispinner";
 import { createSpinner } from "nanospinner";
 import nodepub from "nodepub";
 import { dirname, join } from "path";
@@ -165,9 +166,11 @@ const convertToEpub = async (filename, index) => {
 };
 
 const unziper = async (filePath, filename, index) => {
-  const extractingImage = createSpinner(
-    chalk.magentaBright("Extracting images...")
-  ).start();
+  const multispinner = new Multispinner(
+    ['Extracting Images'])
+  // const extractingImage = createSpinner(
+  //   chalk.magentaBright("Extracting images...")
+  // ).start();
   // console.log(chalk.greenBright("Extracting images..."));
   createReadStream(filePath)
     .pipe(
@@ -176,22 +179,30 @@ const unziper = async (filePath, filename, index) => {
       })
     )
     .on("close", async () => {
-      extractingImage.success();
-      const processingImage = createSpinner(
-        chalk.yellowBright("Processing images...")
-      ).start();
+      multispinner.success('Extracting Images')
+      const multispinner2 = new Multispinner(
+        ['Processing Images'])
+      //extractingImage.success();
+      // const processingImage = createSpinner(
+      //   chalk.yellowBright("Processing images...")
+      // ).start();
+
       await processImage(`./extracted/${filename}`, filename);
-      processingImage.success();
-      const toEpub = createSpinner(
-        chalk.blueBright(`Converting ${filename} to epub...`)
-      ).start();
+      // processingImage.success();
+      multispinner2.success('Processing Images')
+      const multispinner3 = new Multispinner(
+        ['Converting To Epub'])
+      // const toEpub = createSpinner(
+      //   chalk.blueBright(`Converting ${filename} to epub...`)
+      // ).start();
       await convertToEpub(filename, index);
-      toEpub.success();
+      multispinner3.success(`Converting ${filename} To Epub`)
+     // toEpub.success();
     })
     .on("error", (err) => {
-      extractingImage.error({
-        text: err || "Something went wrong.",
-      });
+      // extractingImage.error({
+      //   text: err || "Something went wrong.",
+      // });
     });
 };
 
@@ -284,7 +295,7 @@ const readDirectory = async () => {
   for (let i in files) {
     let file = files[i];
 
-    await unziper(join(dir, file), file, i);
+    unziper(join(dir, file), file, i);
   }
 };
 
