@@ -48,21 +48,25 @@ const processImage = async (path, filename) => {
         // width > height
         if (width > height) {
           //console.log(width,height,file)
-          await sharp(imageBuffer)
+          let left = await sharp(imageBuffer)
             // divide into 2 parts 0 to width/2 and width/2 to width
             .extract({ width: width / 2, height, left: 0, top: 0 })
             //add these 2 images instead of the original
             .grayscale()
-            //.trim()
             .png({ quality: 70 })
+            .toBuffer();
+          await sharp(left)
+            .trim()
             .toFile(`./extracted/${filename}/${file}`.replace(".png", "-2.png"))
             .then(async () => {
               //console.log("i run",file)
-              await sharp(imageBuffer)
+              let right = await sharp(imageBuffer)
                 .extract({ width: width / 2, height, left: width / 2, top: 0 })
-                .grayscale()
-                //.trim()
+               .grayscale()
                 .png({ quality: 70 })
+                .toBuffer();
+              await sharp(right)
+                .trim()
                 .toFile(
                   `./extracted/${filename}/${file}`.replace(".png", "-1.png")
                 )
