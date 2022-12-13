@@ -21,11 +21,11 @@ let metaDataAnswers = {
 const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 
 const welcome = async () => {
-  const intro = chalkAnimation.rainbow("Welcome to Mangapub 🍺");
+  const intro = chalkAnimation.rainbow("Welcome to Manga2cbr4kindle 🍺");
   await sleep();
   intro.stop();
   console.log(`
-    ${chalk.redBright(
+    ${chalk.blueBright(
       "Make sure you ran me in a folder full of cbr/cbz files."
     )}
   `);
@@ -98,12 +98,12 @@ const convertToEpub = async (filename, index) => {
     id: new Date(),
     cover: cover,
     title: filename,
-    series: metaDataAnswers.series,
+    series: metaDataAnswers.series || "",
     sequence: `${index}`,
-    author: metaDataAnswers.author,
+    author: metaDataAnswers.author || "",
     fileAs: metaDataAnswers.author.split(" ").reverse().join(", "),
-    genre: "Non-Fiction",
-    tags: "Sample,Example,Test",
+    genre: metaDataAnswers.genre,
+    publisher: metaDataAnswers.publisher,
     language: "en",
     showContents: false,
     images: images,
@@ -152,7 +152,7 @@ const unziper = async (filePath, filename, index) => {
     )
     .on("close", async () => {
       await processImage(`./extracted/${filename}`, filename);
-      await readExtracted();
+      await convertToEpub(filename, index);
     });
 };
 
@@ -162,7 +162,7 @@ const metaDataQuestions = async () => {
     type: "input",
     message: "Enter series name",
     default() {
-      return "";
+      return "Default Series";
     },
   });
   let q2 = await inquirer.prompt({
@@ -170,23 +170,28 @@ const metaDataQuestions = async () => {
     type: "input",
     message: "Enter author name",
     default() {
-      return "";
+      return "Default Author";
     },
   });
   let q3 = await inquirer.prompt({
     name: "genre",
-    type: "input",
+    type: "checkbox",
     message: "Enter Genre name",
+    choices: ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Historical", "Horror", "Mecha", "Mystery",
+      "One shot", "Overpowered MC", "Sci-fi", "Shonen", "Slice of life", "Supernatural", "Time travel", "Other"],
     default() {
       return "";
     },
   });
+
+
+
   let q4 = await inquirer.prompt({
     name: "publisher",
     type: "input",
     message: "Enter publisher name",
     default() {
-      return "";
+      return "Default Publisher";
     },
   });
   let q5 = await inquirer.prompt({
@@ -203,6 +208,10 @@ const metaDataQuestions = async () => {
   // add publisher
   metaDataAnswers.author = q2.author;
   metaDataAnswers.series = q1.series;
+  metaDataAnswers.genre = q3.genre;
+  metaDataAnswers.publisher = q4.publisher;
+  metaDataAnswers.kindle = q5.kindle;
+  console.log(metaDataAnswers)
 };
 
 const readDirectory = async () => {
@@ -219,17 +228,7 @@ const readDirectory = async () => {
   
 };
 
-const readExtracted = async () => {
-  let dir = join(__dirname, "./extracted");
-  let files = readdirSync(dir);
-  for(let i in files){
-    let file = files[i]
-   
-      convertToEpub(file, i);
-  
-  }
-  //console.log("done");
-};
+
 
 await welcome();
 await readDirectory();
