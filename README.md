@@ -1,4 +1,4 @@
-# mangapub (BETA)
+# manga2epub4kindle (BETA)
 
 ![image](https://user-images.githubusercontent.com/54748294/207400655-ab8cbd0c-a6d0-4431-b8ff-7dffac54b3d3.png)
 
