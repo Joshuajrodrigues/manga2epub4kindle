@@ -50,12 +50,12 @@ const processImage = async (path, filename) => {
         if (width > height) {
           await sharp(imageBuffer)
             // divide into 2 parts 0 to width/2 and width/2 to width
-            .extract({ width: width / 2, height, left: 0, top: 0 })
+            .extract({ width: Math.round(width / 2), height, left: 0, top: 0 })
             //add these 2 images instead of the original
             .toFile(`./extracted/${filename}/${file}`.replace(".png", "-2.png"))
             .then(async() => {
               await sharp(imageBuffer)
-                .extract({ width: width / 2, height, left: width / 2, top: 0 })
+                .extract({ width: Math.round(width / 2), height, left: Math.round(width / 2), top: 0 })
                 .toFile(
                   `./extracted/${filename}/${file}`.replace(".png", "-1.png")
                 )
