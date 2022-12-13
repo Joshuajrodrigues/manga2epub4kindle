@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import chalk from "chalk";
 import chalkAnimation from "chalk-animation";
+import { error } from "console";
 import { createReadStream, readdirSync, rmSync, unlink } from "fs";
 import inquirer from "inquirer";
+import { createSpinner } from "nanospinner";
 import nodepub from "nodepub";
 import { dirname, join } from "path";
 import sharp from "sharp";
@@ -21,7 +23,7 @@ let metaDataAnswers = {
 const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 
 const welcome = async () => {
-  const intro = chalkAnimation.rainbow("Welcome to Manga2cbr4kindle 🍺");
+  const intro = chalkAnimation.rainbow("Welcome to Manga2epub4kindle 🍺");
   await sleep();
   intro.stop();
   console.log(`
@@ -32,24 +34,27 @@ const welcome = async () => {
 };
 
 const processImage = async (path, filename) => {
-  console.log(chalk.greenBright("Processing images..."));
+
   let dir = join(__dirname, path);
   let files = readdirSync(dir);
 //  console.log("batch",files.length)
   for (let i in files) {
     let file = files[i];
-    await sharp(join(dir, file))
+
+    let imageBuffer = await sharp(join(dir, file)).grayscale().trim().png({ quality: 85 }).toBuffer();
+
+    await sharp(imageBuffer)
       .metadata()
       .then(async ({ width, height }) => {
         // width > height
         if (width > height) {
-          await sharp(join(dir, file))
+          await sharp(imageBuffer)
             // divide into 2 parts 0 to width/2 and width/2 to width
             .extract({ width: width / 2, height, left: 0, top: 0 })
             //add these 2 images instead of the original
             .toFile(`./extracted/${filename}/${file}`.replace(".png", "-2.png"))
             .then(async() => {
-              await sharp(join(dir, file))
+              await sharp(imageBuffer)
                 .extract({ width: width / 2, height, left: width / 2, top: 0 })
                 .toFile(
                   `./extracted/${filename}/${file}`.replace(".png", "-1.png")
@@ -63,6 +68,8 @@ const processImage = async (path, filename) => {
                   });
                 });
             });
+        } else {
+          sharp(imageBuffer).toFile(`./extracted/${filename}/${file}`)
         }
       })
     // .then(() => {
@@ -71,23 +78,23 @@ const processImage = async (path, filename) => {
     // });
   }
 
-  for (let i in files) {
-    let file = files[i];
-    //console.log("file",file)
-    let trimmed = await sharp(join(dir, file)).trim().jpeg().toBuffer();
-    await sharp(trimmed).toFile(`./extracted/${filename}/${file}`);
-    // .then(() => {
-    //   console.log("done trimming", file)
+  // for (let i in files) {
+  //   let file = files[i];
+  //   //console.log("file",file)
+  //   let trimmed = await sharp(join(dir, file)).trim().jpeg().toBuffer();
+  //   await sharp(trimmed).toFile(`./extracted/${filename}/${file}`);
+  //   // .then(() => {
+  //   //   console.log("done trimming", file)
 
-    // })
-  }
+  //   // })
+  // }
 
-  
+  //processingImage.success()
 };
 
 const convertToEpub = async (filename, index) => {
-  console.log(chalk.greenBright("Converting to Epub..."));
-
+  // console.log(chalk.greenBright("Converting to Epub..."));
+  let sequence = metaDataAnswers.startIndex || 0 + index
   let dir = join(__dirname, `./extracted/${filename}`);
   let files = readdirSync(dir);
   let cover = join(dir, files[0]);
@@ -99,7 +106,7 @@ const convertToEpub = async (filename, index) => {
     cover: cover,
     title: filename,
     series: metaDataAnswers.series || "",
-    sequence: `${index}`,
+    sequence: `${sequence}`,
     author: metaDataAnswers.author || "",
     fileAs: metaDataAnswers.author.split(" ").reverse().join(", "),
     genre: metaDataAnswers.genre,
@@ -143,7 +150,8 @@ const convertToEpub = async (filename, index) => {
 };
 
 const unziper = async (filePath, filename, index) => {
-  console.log(chalk.greenBright("Extracting images..."));
+  const extractingImage = createSpinner(chalk.magentaBright("Extracting images...")).start()
+ // console.log(chalk.greenBright("Extracting images..."));
   createReadStream(filePath)
     .pipe(
       unzipper.Extract({
@@ -151,9 +159,18 @@ const unziper = async (filePath, filename, index) => {
       })
     )
     .on("close", async () => {
+      extractingImage.success()
+      const processingImage = createSpinner(chalk.yellowBright("Processing images...")).start()
       await processImage(`./extracted/${filename}`, filename);
+      processingImage.success()
+      const toEpub = createSpinner(chalk.blueBright(`Converting ${filename} to epub...`)).start()
       await convertToEpub(filename, index);
-    });
+      toEpub.success()
+    }).on("error", (err) => {
+      extractingImage.error({
+        text: err || "Something went wrong."
+      })
+    })
 };
 
 const metaDataQuestions = async () => {
@@ -183,9 +200,6 @@ const metaDataQuestions = async () => {
       return "";
     },
   });
-
-
-
   let q4 = await inquirer.prompt({
     name: "publisher",
     type: "input",
@@ -206,12 +220,21 @@ const metaDataQuestions = async () => {
   // select kindle
   // add genre
   // add publisher
+  let q6 = await inquirer.prompt({
+    name: "startIndex",
+    type: "text",
+    message: "Select start index for series",
+    default() {
+      return "0"
+    }
+  })
   metaDataAnswers.author = q2.author;
   metaDataAnswers.series = q1.series;
   metaDataAnswers.genre = q3.genre;
   metaDataAnswers.publisher = q4.publisher;
   metaDataAnswers.kindle = q5.kindle;
-  console.log(metaDataAnswers)
+  metaDataAnswers.startIndex = q6.startIndex;
+  console.log("Your metadata: ", metaDataAnswers)
 };
 
 const readDirectory = async () => {
