@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 import chalk from "chalk";
 import chalkAnimation from "chalk-animation";
-import { error } from "console";
 import { createReadStream, readdirSync, rmSync, unlink } from "fs";
 import inquirer from "inquirer";
-import Multispinner from "multispinner";
 import { createSpinner } from "nanospinner";
 import nodepub from "nodepub";
 import { dirname, join } from "path";
