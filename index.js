@@ -5,10 +5,11 @@ import { createReadStream, readdirSync, rmSync, unlink } from "fs";
 import inquirer from "inquirer";
 import { createSpinner } from "nanospinner";
 import nodepub from "nodepub";
-import { dirname, join } from "path";
+import { dirname, extname, join } from "path";
 import sharp from "sharp";
 import unzipper from "unzipper";
 import { fileURLToPath } from "url";
+import { moveFilesToTopLevel } from "./utils/index.js";
 
 // sharp.cache(false);
 const __filename = fileURLToPath(import.meta.url);
@@ -27,69 +28,71 @@ const welcome = async () => {
   intro.stop();
   console.log(`
     ${chalk.blueBright(
-      "Make sure you ran me in a folder full of cbr/cbz files."
+      "Make sure you ran me in a folder full of cbz files."
     )}
   `);
 };
 
 const processImage = async (path, filename) => {
-  return new Promise(async (resolve, reject) => {
-    let dir = join(__dirname, path);
-    let files = readdirSync(dir);
-    for (let i in files) {
-      let file = files[i];
-      let imageBuffer = await sharp(join(dir, file)).toBuffer();
-      let imageMetaData = await sharp(imageBuffer).metadata();
-      if (imageMetaData.width > imageMetaData.height) {
-        //console.log(width,height,file)
-        let left = await sharp(imageBuffer)
-          // divide into 2 parts 0 to width/2 and width/2 to width
-          .extract({
-            width: imageMetaData.width / 2,
-            height: imageMetaData.height,
-            left: 0,
-            top: 0,
-          })
-          //add these 2 images instead of the original
-          .grayscale()
-          .png({ quality: 5 })
-          .toBuffer();
-        await sharp(left)
-          .trim()
-          .toFile(`./extracted/${filename}/${file}`.replace(".png", "-2.png"))
-          .then(async () => {
-            //console.log("i run",file)
-            let right = await sharp(imageBuffer)
-              .extract({
-                width: imageMetaData.width / 2,
-                height: imageMetaData.height,
-                left: imageMetaData.width / 2,
-                top: 0,
-              })
-              .grayscale()
-              .png({ quality: 5 })
-              .toBuffer();
-            await sharp(right)
-              .trim()
-              .toFile(
-                `./extracted/${filename}/${file}`.replace(".png", "-1.png")
-              );
+  //console.log("filename", filename)
+  await moveFilesToTopLevel('./extracted', filename)
+  // return new Promise(async (resolve, reject) => {
+  //   let dir = join(__dirname, path);
+  //   let files = readdirSync(dir);
+  //   for (let i in files) {
+  //     let file = files[i];
+  //     let imageBuffer = await sharp(join(dir, file)).toBuffer();
+  //     let imageMetaData = await sharp(imageBuffer).metadata();
+  //     if (imageMetaData.width > imageMetaData.height) {
+  //       //console.log(width,height,file)
+  //       let left = await sharp(imageBuffer)
+  //         // divide into 2 parts 0 to width/2 and width/2 to width
+  //         .extract({
+  //           width: imageMetaData.width / 2,
+  //           height: imageMetaData.height,
+  //           left: 0,
+  //           top: 0,
+  //         })
+  //         //add these 2 images instead of the original
+  //         .grayscale()
+  //         .png({ quality: 5 })
+  //         .toBuffer();
+  //       await sharp(left)
+  //         .trim()
+  //         .toFile(`./extracted/${filename}/${file}`.replace(".png", "-2.png"))
+  //         .then(async () => {
+  //           //console.log("i run",file)
+  //           let right = await sharp(imageBuffer)
+  //             .extract({
+  //               width: imageMetaData.width / 2,
+  //               height: imageMetaData.height,
+  //               left: imageMetaData.width / 2,
+  //               top: 0,
+  //             })
+  //             .grayscale()
+  //             .png({ quality: 5 })
+  //             .toBuffer();
+  //           await sharp(right)
+  //             .trim()
+  //             .toFile(
+  //               `./extracted/${filename}/${file}`.replace(".png", "-1.png")
+  //             );
 
-            files.splice(i, 1);
-            unlink(`./extracted/${filename}/${file}`, (err) => {
-              if (err) throw err;
-            });
-          });
-      } else {
-        sharp(imageBuffer)
-          .grayscale()
-          .trim()
-          .png({ quality: 5 })
-          .toFile(`./extracted/${filename}/${file}`);
-      }
-    }
-    resolve(true);
-  });
+  //           files.splice(i, 1);
+  //           unlink(`./extracted/${filename}/${file}`, (err) => {
+  //             if (err) throw err;
+  //           });
+  //         });
+  //     } else {
+  //       sharp(imageBuffer)
+  //         .grayscale()
+  //         .trim()
+  //         .png({ quality: 5 })
+  //         .toFile(`./extracted/${filename}/${file}`);
+  //     }
+  //   }
+  //   resolve(true);
+  // });
 };
 
 const convertToEpub = async (filename, index) => {
@@ -104,7 +107,7 @@ const convertToEpub = async (filename, index) => {
   var metadata = {
     id: new Date(),
     cover: cover,
-    title: filename.replace(".cbz",""),
+    title: filename.replace(".cbz", ""),
     series: metaDataAnswers.series || "",
     sequence: `${sequence}`,
     author: metaDataAnswers.author || "",
@@ -153,6 +156,7 @@ const unZipFiles = (filePath, filename) => {
   return new Promise((resolve, reject) => {
     createReadStream(filePath)
       .pipe(
+        //unzipper.Parse()
         unzipper.Extract({
           path: `./extracted/${filename}`,
         })
@@ -248,25 +252,22 @@ const readDirectory = async () => {
   await metaDataQuestions();
   let dir = join(__dirname, "./testDir");
   let files = readdirSync(dir);
+
   for (let i = 0; i < files.length; i++) {
+    if (extname(files[i]) !== '.cbz') continue
     let file = files[i];
     const extractSpinner = createSpinner('Extracting files...').start()
-    let isExtracted = await unZipFiles(join(dir, file), file);
+    const isExtracted = await unZipFiles(join(dir, file), file);
+    if (isExtracted) extractSpinner.success()
 
-    if (isExtracted) {
-      extractSpinner.success()
-      const processSpinner = createSpinner('Processing files...').start()
-      let isProcessed = await processImage(
-        `./extracted/${file}`,
-        file
-      );
-      if (isProcessed) {
-        processSpinner.success()
-        const convertingSpinner = createSpinner('Converting to epub...').start()
-        await convertToEpub(file, i);
-        convertingSpinner.success({text:`${file} converted to epub 🍻`})
-      }
-    }
+    // const processSpinner = createSpinner('Processing files...').start()
+    let isProcessed = await processImage(`./extracted/${file}`, file);
+   // if (isProcessed) processSpinner.success()
+
+    //const convertingSpinner = createSpinner('Converting to epub...').start()
+   // await convertToEpub(file, i);
+   // convertingSpinner.success({ text: `${file} converted to epub 🍻` })
+
   }
 };
 
