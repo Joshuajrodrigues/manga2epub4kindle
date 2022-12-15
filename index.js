@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import chalk from "chalk";
 import chalkAnimation from "chalk-animation";
-import { createReadStream, readdirSync, rmSync, unlink } from "fs";
+import { createReadStream, readdirSync, rmSync, unlink, writeFile, writeFileSync } from "fs";
 import inquirer from "inquirer";
 import { createSpinner } from "nanospinner";
 import nodepub from "nodepub";
@@ -9,7 +9,8 @@ import { dirname, extname, join } from "path";
 import sharp from "sharp";
 import unzipper from "unzipper";
 import { fileURLToPath } from "url";
-import { moveFilesToTopLevel } from "./utils/index.js";
+import { supportedFiles } from "./utils/constants.js";
+import { checkforMetadata, checkValidFiles, moveFilesToTopLevel } from "./utils/index.js";
 
 // sharp.cache(false);
 const __filename = fileURLToPath(import.meta.url);
@@ -173,6 +174,7 @@ const unZipFiles = (filePath, filename) => {
 };
 
 const metaDataQuestions = async () => {
+
   let q1 = await inquirer.prompt({
     name: "series",
     type: "input",
@@ -251,21 +253,50 @@ const metaDataQuestions = async () => {
   metaDataAnswers.kindle = q5.kindle;
   metaDataAnswers.startIndex = q6.startIndex;
   console.log("Your metadata: ", metaDataAnswers);
+  let q7 = await inquirer.prompt({
+    name: "saveMeta",
+    type: "confirm",
+    message: "Would you like to save this metadata for future use ?"
+  })
+  if (q7.saveMeta) {
+    await saveMetaDataToFile()
+  }
 };
 
+const loadMetaDataFromFile = async () => {
+  console.log("i run")
+}
+
+const saveMetaDataToFile = async () => {
+  writeFileSync('metadata.json', JSON.stringify(metaDataAnswers), (err) => {
+    if (err) throw err
+  })
+}
+
 const readDirectory = async () => {
-  await metaDataQuestions();
+
   let dir = join(__dirname, "./testDir");
   let files = readdirSync(dir);
 
+  let { count, isMetadata } = await checkValidFiles(files)
+  if (isMetadata) {
+    await loadMetaDataFromFile()
+  } else {
+    await metaDataQuestions();
+  }
+
+  console.log(chalk.underline(`Found ${count} valid file/s.`))
+
   for (let i = 0; i < files.length; i++) {
-    if (extname(files[i]) !== '.cbz') continue
+    let extention = extname(files[i])
+    if (!supportedFiles.includes(extention)) continue
     let file = files[i];
+
     const extractSpinner = createSpinner('Extracting files...').start()
     const isExtracted = await unZipFiles(join(dir, file), file);
     if (isExtracted) extractSpinner.success()
 
-     const processSpinner = createSpinner('Processing files...').start()
+    const processSpinner = createSpinner('Processing files...').start()
     let isProcessed = await processImage(`./extracted/${file}`, file);
     if (isProcessed) processSpinner.success()
 
