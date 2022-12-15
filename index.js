@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import chalk from "chalk";
 import chalkAnimation from "chalk-animation";
-import { createReadStream, readdirSync, rmSync, unlink, writeFile, writeFileSync } from "fs";
+import { createReadStream, readdirSync, readFile, readFileSync, rmSync, unlink, writeFile, writeFileSync } from "fs";
 import inquirer from "inquirer";
 import { createSpinner } from "nanospinner";
 import nodepub from "nodepub";
@@ -102,7 +102,8 @@ const processImage = async (path, filename) => {
 };
 
 const convertToEpub = async (filename, index) => {
-  let sequence = (Number(metaDataAnswers.startIndex) || 0) + index;
+   metaDataAnswers.startIndex = `${(Number(metaDataAnswers.startIndex) || 0) + index}`;
+  
   //console.log("sequence",sequence,(metaDataAnswers.startIndex || 0),index)
   let dir = join(__dirname, `./extracted/${filename}`);
   let files = readdirSync(dir);
@@ -115,7 +116,7 @@ const convertToEpub = async (filename, index) => {
     cover: cover,
     title: filename.replace(".cbz", "").replace(".cbr", ""),
     series: metaDataAnswers.series || "",
-    sequence: `${sequence}`,
+    sequence: metaDataAnswers.startIndex,
     author: metaDataAnswers.author || "",
     fileAs: metaDataAnswers.author.split(" ").reverse().join(", "),
     genre: metaDataAnswers.genre,
@@ -153,8 +154,9 @@ const convertToEpub = async (filename, index) => {
   });
   await epub
     .writeEPUB("./epub", filename.replace(".zip", "").replace(".cbz", "").replace(".cbr", ""))
-    .then(() => {
+    .then(async () => {
       rmSync(`./extracted/${filename}`, { recursive: true });
+      await saveMetaDataToFile(metaDataAnswers)
     });
 };
 
@@ -264,11 +266,37 @@ const metaDataQuestions = async () => {
 };
 
 const loadMetaDataFromFile = async () => {
-  console.log("i run")
+  return new Promise((resolve,reject)=>{
+    let metaData = {}
+     readFile('./testDir/metadata.json',async (err,data)=>{
+      if(err) throw err
+      metaData = JSON.parse(data)
+      let q7 = await inquirer.prompt({
+        name: "loadMeta",
+        type: "confirm",
+        message:chalk.yellow(`Would you like to use this data ?
+
+${JSON.stringify(metaData,null,2)}
+
+your start series number will continue where you left off, from ${Number(metaData.startIndex) + 1}
+`)
+      })
+      if(q7.loadMeta){
+        
+        metaDataAnswers = metaData
+        metaDataAnswers.startIndex = `${metaData.startIndex + 1}`
+        resolve()
+      }else{
+        await metaDataQuestions()
+        resolve()
+      }
+    })
+  })
 }
 
-const saveMetaDataToFile = async () => {
-  writeFileSync('metadata.json', JSON.stringify(metaDataAnswers), (err) => {
+const saveMetaDataToFile = async (metaData=metaDataAnswers) => {
+
+  writeFileSync('./testDir/metadata.json', JSON.stringify(metaData), (err) => {
     if (err) throw err
   })
 }
@@ -306,6 +334,8 @@ const readDirectory = async () => {
 
   }
 };
+
+
 
 await welcome();
 await readDirectory();
