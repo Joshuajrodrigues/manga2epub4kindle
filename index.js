@@ -14,7 +14,7 @@ import { checkforMetadata, checkValidFiles, moveFilesToTopLevel } from "./utils/
 
 // sharp.cache(false);
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = process.cwd();
 
 let metaDataAnswers = {
   series: "",
@@ -312,7 +312,7 @@ const saveMetaDataToFile = async (metaData = metaDataAnswers) => {
 const readDirectory = async () => {
 
   let dir = __dirname;
-  console.log("directory", dir)
+  //console.log("directory", dir)
   let files = readdirSync(dir);
 
   let { count, isMetadata } = await checkValidFiles(files)
