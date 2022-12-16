@@ -20,7 +20,9 @@ let metaDataAnswers = {
   series: "",
   author: "",
 };
+let startIndex
 
+let selectedFiles = []
 const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 
 const welcome = async () => {
@@ -29,7 +31,7 @@ const welcome = async () => {
   intro.stop();
   console.log(`
     ${chalk.blueBright(
-      "Make sure you ran me in a folder full of cbz files."
+      "Make sure you ran me in a folder full of cbz/cbr files."
     )}
   `);
 };
@@ -102,7 +104,7 @@ const processImage = async (path, filename) => {
 };
 
 const convertToEpub = async (filename, index) => {
-   metaDataAnswers.startIndex = `${(Number(metaDataAnswers.startIndex) || 0) + index}`;
+  let sequence = `${(Number(startIndex) || 0) + index}`;
   
   //console.log("sequence",sequence,(metaDataAnswers.startIndex || 0),index)
   let dir = join(__dirname, `./extracted/${filename}`);
@@ -116,7 +118,7 @@ const convertToEpub = async (filename, index) => {
     cover: cover,
     title: filename.replace(".cbz", "").replace(".cbr", ""),
     series: metaDataAnswers.series || "",
-    sequence: metaDataAnswers.startIndex,
+    sequence,
     author: metaDataAnswers.author || "",
     fileAs: metaDataAnswers.author.split(" ").reverse().join(", "),
     genre: metaDataAnswers.genre,
@@ -175,7 +177,7 @@ const unZipFiles = (filePath, filename) => {
   });
 };
 
-const metaDataQuestions = async () => {
+const metaDataQuestions = async (count) => {
 
   let q1 = await inquirer.prompt({
     name: "series",
@@ -232,29 +234,28 @@ const metaDataQuestions = async () => {
     name: "kindle",
     type: "list",
     message: "Select your kindle",
-    choices: ["Paperwhite 11th gen", "Basic Kindle"],
+    choices: ["Paperwhite 11th Generation"],
     default() {
-      return "Paperwhite 11th gen";
+      return "Paperwhite 11th Generation";
     },
   });
-  // select kindle
-  // add genre
-  // add publisher
   let q6 = await inquirer.prompt({
     name: "startIndex",
-    type: "text",
-    message: "Select start index for series",
+    type: "input",
+    message: "Select start index for series (Volume number starts from)",
     default() {
       return "0";
     },
   });
-  metaDataAnswers.author = q2.author;
+
   metaDataAnswers.series = q1.series;
+  metaDataAnswers.author = q2.author;
   metaDataAnswers.genre = q3.genre;
   metaDataAnswers.publisher = q4.publisher;
   metaDataAnswers.kindle = q5.kindle;
-  metaDataAnswers.startIndex = q6.startIndex;
+  startIndex = q6.startIndex;
   console.log("Your metadata: ", metaDataAnswers);
+
   let q7 = await inquirer.prompt({
     name: "saveMeta",
     type: "confirm",
@@ -265,10 +266,10 @@ const metaDataQuestions = async () => {
   }
 };
 
-const loadMetaDataFromFile = async () => {
+const loadMetaDataFromFile = async (count) => {
   return new Promise((resolve,reject)=>{
     let metaData = {}
-     readFile('./testDir/metadata.json',async (err,data)=>{
+    readFile('./metadata.json', async (err, data) => {
       if(err) throw err
       metaData = JSON.parse(data)
       let q7 = await inquirer.prompt({
@@ -278,47 +279,65 @@ const loadMetaDataFromFile = async () => {
 
 ${JSON.stringify(metaData,null,2)}
 
-your start series number will continue where you left off, from ${Number(metaData.startIndex) + 1}
+
 `)
       })
-      if(q7.loadMeta){
-        
-        metaDataAnswers = metaData
-        metaDataAnswers.startIndex = `${metaData.startIndex + 1}`
+
+      if (q7.loadMeta) {
+        let q6 = await inquirer.prompt({
+          name: "startIndex",
+          type: "input",
+          message: "Select start index for series (Volume number starts from)",
+          default() {
+            return "0";
+          },
+        });
+        startIndex = q6.startIndex;
+         metaDataAnswers = metaData
         resolve()
       }else{
-        await metaDataQuestions()
+         await metaDataQuestions(count)
         resolve()
       }
     })
   })
 }
 
-const saveMetaDataToFile = async (metaData=metaDataAnswers) => {
-
-  writeFileSync('./testDir/metadata.json', JSON.stringify(metaData), (err) => {
+const saveMetaDataToFile = async (metaData = metaDataAnswers) => {
+  writeFileSync('./metadata.json', JSON.stringify(metaData), (err) => {
     if (err) throw err
   })
 }
 
 const readDirectory = async () => {
 
-  let dir = join(__dirname, "./testDir");
+  let dir = join(__dirname, "./");
   let files = readdirSync(dir);
 
   let { count, isMetadata } = await checkValidFiles(files)
+  let validFiles = files.filter((item) => supportedFiles.includes(extname(item)))
+  console.log(chalk.underline(`Found ${count} valid file/s.`))
+  let filesToProcess = await inquirer.prompt({
+    name: "filesToSkip",
+    pageSize: 25,
+    type: "checkbox",
+    message: "Select files to process",
+    choices: validFiles
+  })
+  selectedFiles = filesToProcess.filesToSkip
+
   if (isMetadata) {
-    await loadMetaDataFromFile()
+    await loadMetaDataFromFile(count)
   } else {
-    await metaDataQuestions();
+    await metaDataQuestions(count);
   }
 
-  console.log(chalk.underline(`Found ${count} valid file/s.`))
 
-  for (let i = 0; i < files.length; i++) {
-    let extention = extname(files[i])
-    if (!supportedFiles.includes(extention)) continue
-    let file = files[i];
+
+  for (let i = 0; i < validFiles.length; i++) {
+
+    let file = validFiles[i];
+    if (!selectedFiles.includes(file)) continue
 
     const extractSpinner = createSpinner('Extracting files...').start()
     const isExtracted = await unZipFiles(join(dir, file), file);
