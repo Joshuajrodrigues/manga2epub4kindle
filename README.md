@@ -4,6 +4,14 @@
 
 ## A very light and simple terminal app in the making to convert all cbr manga to epub suitable for kindle devices.
 
+
+## How to use:
+-> Open you folder full of cbz/cbr files. 
+-> Open your terminal in your folder
+-> Type in npx manga2epub4kindle
+-> Profit !
+
+
 Current Features
 1) Trims Borders
 2) Scales Images
