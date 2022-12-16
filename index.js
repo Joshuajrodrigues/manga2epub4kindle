@@ -311,7 +311,7 @@ const saveMetaDataToFile = async (metaData = metaDataAnswers) => {
 
 const readDirectory = async () => {
 
-  let dir = join(__dirname, "./");
+  let dir = __dirname;
   let files = readdirSync(dir);
 
   let { count, isMetadata } = await checkValidFiles(files)
