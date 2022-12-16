@@ -312,6 +312,7 @@ const saveMetaDataToFile = async (metaData = metaDataAnswers) => {
 const readDirectory = async () => {
 
   let dir = __dirname;
+  console.log("directory", dir)
   let files = readdirSync(dir);
 
   let { count, isMetadata } = await checkValidFiles(files)
