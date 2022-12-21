@@ -6,10 +6,10 @@
 
 
 ## How to use:
--> Open you folder full of cbz/cbr files. 
--> Open your terminal in your folder
--> Type in npx manga2epub4kindle
--> Profit !
+1) Open you folder full of cbz/cbr files. 
+2) Open your terminal in your folder
+3) Type in npx manga2epub4kindle
+4) Profit !
 
 
 Current Features
