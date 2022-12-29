@@ -1,6 +1,6 @@
 {
   "name": "manga2epub4kindle",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Convert cbr/cbz manga files to epub for kindle.",
   "main": "index.js",
   "type": "module",
