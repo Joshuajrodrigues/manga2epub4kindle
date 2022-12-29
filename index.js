@@ -1,7 +1,16 @@
 #!/usr/bin/env node
 import chalk from "chalk";
 import chalkAnimation from "chalk-animation";
-import { createReadStream, readdirSync, readFile, readFileSync, rmSync, unlink, writeFile, writeFileSync } from "fs";
+import {
+  createReadStream,
+  readdirSync,
+  readFile,
+  readFileSync,
+  rmSync,
+  unlink,
+  writeFile,
+  writeFileSync,
+} from "fs";
 import inquirer from "inquirer";
 import { createSpinner } from "nanospinner";
 import nodepub from "nodepub";
@@ -10,7 +19,11 @@ import sharp from "sharp";
 import unzipper from "unzipper";
 import { fileURLToPath } from "url";
 import { supportedFiles } from "./utils/constants.js";
-import { checkforMetadata, checkValidFiles, moveFilesToTopLevel } from "./utils/index.js";
+import {
+  checkforMetadata,
+  checkValidFiles,
+  moveFilesToTopLevel,
+} from "./utils/index.js";
 
 // sharp.cache(false);
 const __filename = fileURLToPath(import.meta.url);
@@ -20,9 +33,10 @@ let metaDataAnswers = {
   series: "",
   author: "",
 };
-let startIndex
-
-let selectedFiles = []
+let startIndex;
+let WIDTH = 0;
+let HEIGHT = 0;
+let selectedFiles = [];
 const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 
 const welcome = async () => {
@@ -38,18 +52,20 @@ const welcome = async () => {
 
 const processImage = async (path, filename) => {
   //console.log("filename", filename)
-  await moveFilesToTopLevel('./extracted', filename)
+  await moveFilesToTopLevel("./extracted", filename);
   return new Promise(async (resolve, reject) => {
     let dir = join(__dirname, path);
     let files = readdirSync(dir);
     for (let i in files) {
       let file = files[i];
-      let imageBuffer = await sharp(join(dir, file)).resize({
-        width:1072,
-        height:1448,
-        fit:"fill"
-        
-      }).toFormat("jpeg").toBuffer();
+      let imageBuffer = await sharp(join(dir, file))
+        .resize({
+          width: WIDTH,
+          height: HEIGHT,
+          fit: "fill",
+        })
+        .toFormat("jpeg")
+        .toBuffer();
       let imageMetaData = await sharp(imageBuffer).metadata();
       if (imageMetaData.width > imageMetaData.height) {
         //console.log(width,height,file)
@@ -105,14 +121,14 @@ const processImage = async (path, filename) => {
 
 const convertToEpub = async (filename, index) => {
   let sequence = `${(Number(startIndex) || 0) + index}`;
-  
+
   //console.log("sequence",sequence,(metaDataAnswers.startIndex || 0),index)
   let dir = join(__dirname, `./extracted/${filename}`);
   let files = readdirSync(dir);
   let cover = join(dir, files[0]);
   let images = files.map((file) => join(dir, file));
   //files.shift();
-
+  images.splice(0,1)
   var metadata = {
     id: new Date(),
     cover: cover,
@@ -128,8 +144,8 @@ const convertToEpub = async (filename, index) => {
     images: images,
 
     pageDirection: "rtl",
-    originalResWidth: 1072,
-    originalResHeight: 1448,
+    originalResWidth: WIDTH,
+    originalResHeight: HEIGHT,
     kindleComicConverter: true,
   };
 
@@ -139,7 +155,7 @@ const convertToEpub = async (filename, index) => {
       `Page ${index}`,
       `
       <div style="text-align:center;top:0.0%;">
-      <img width="1072" height="1448" src='../images/${image}' />
+      <img width="${WIDTH}" height="${HEIGHT}" src='../images/${image}' />
       </div>
       `
     );
@@ -155,10 +171,13 @@ const convertToEpub = async (filename, index) => {
         `);
   });
   await epub
-    .writeEPUB("./epub", filename.replace(".zip", "").replace(".cbz", "").replace(".cbr", ""))
+    .writeEPUB(
+      "./epub",
+      filename.replace(".zip", "").replace(".cbz", "").replace(".cbr", "")
+    )
     .then(async () => {
       rmSync(`./extracted/${filename}`, { recursive: true });
-      await saveMetaDataToFile(metaDataAnswers)
+     // await saveMetaDataToFile(metaDataAnswers);
     });
 };
 
@@ -166,7 +185,7 @@ const unZipFiles = (filePath, filename) => {
   return new Promise((resolve, reject) => {
     createReadStream(filePath)
       .pipe(
-       //unzipper.Parse()
+        //unzipper.Parse()
         unzipper.Extract({
           path: `./extracted/${filename}`,
         })
@@ -177,8 +196,48 @@ const unZipFiles = (filePath, filename) => {
   });
 };
 
-const metaDataQuestions = async (count) => {
+const getScreenSize = async () => {
+  let kindle = metaDataAnswers.kindle;
+ // console.log("getScreenSize",kindle)
+  switch (kindle) {
+    case "Kindle Paperwhite 3/4/Voyage/Oasis":
+      WIDTH = 1072;
+      HEIGHT = 1448;
+      break;
+    case "Kindle Oasis 2/3":
+      WIDTH = 1264;
+      HEIGHT = 1680;
+      break;
+    case "Kindle Paperwhite 1/2":
+      WIDTH = 758;
+      HEIGHT = 1024;
+      break;
+    case "Kindle DX/DXG":
+      WIDTH = 824;
+      HEIGHT = 1000;
+      break;
+    case "Kindle":
+      WIDTH = 600;
+      HEIGHT = 800;
+      break;
+    case "Kindle Keyboard/Touch":
+      WIDTH = 600;
+      HEIGHT = 800;
+      break;
+    case "Kindle 2":
+      WIDTH = 600;
+      HEIGHT = 670;
+      break;
+    case "Kindle 1":
+      WIDTH = 600;
+      HEIGHT = 670;
+      break;
+    default:
+      break;
+  }
+};
 
+const metaDataQuestions = async (count) => {
   let q1 = await inquirer.prompt({
     name: "series",
     type: "input",
@@ -230,13 +289,23 @@ const metaDataQuestions = async (count) => {
       return "Default Publisher";
     },
   });
+
   let q5 = await inquirer.prompt({
     name: "kindle",
     type: "list",
     message: "Select your kindle",
-    choices: ["Paperwhite 11th Generation"],
+    choices: [
+      "Kindle Paperwhite 3/4/Voyage/Oasis",
+      "Kindle Oasis 2/3",
+      "Kindle Paperwhite 1/2",
+      "Kindle DX/DXG",
+      "Kindle",
+      "Kindle Keyboard/Touch",
+      "Kindle 2",
+      "Kindle 1",
+    ],
     default() {
-      return "Paperwhite 11th Generation";
+      return "Kindle Paperwhite 3/4/Voyage/Oasis";
     },
   });
   let q6 = await inquirer.prompt({
@@ -254,34 +323,36 @@ const metaDataQuestions = async (count) => {
   metaDataAnswers.publisher = q4.publisher;
   metaDataAnswers.kindle = q5.kindle;
   startIndex = q6.startIndex;
-  console.log("Your metadata: ", metaDataAnswers);
+  //console.log("Your metadata: ", metaDataAnswers);
 
   let q7 = await inquirer.prompt({
     name: "saveMeta",
     type: "confirm",
-    message: "Would you like to save this metadata for future use ?"
-  })
+    message: "Would you like to save this metadata for future use ?",
+  });
+ // console.log("save to metadata:",q7.saveMeta)
   if (q7.saveMeta) {
-    await saveMetaDataToFile()
+    await saveMetaDataToFile();
   }
+  await getScreenSize();
 };
 
 const loadMetaDataFromFile = async (count) => {
-  return new Promise((resolve,reject)=>{
-    let metaData = {}
-    readFile('./metadata.json', async (err, data) => {
-      if(err) throw err
-      metaData = JSON.parse(data)
+  return new Promise((resolve, reject) => {
+    let metaData = {};
+    readFile("./metadata.json", async (err, data) => {
+      if (err) throw err;
+      metaData = JSON.parse(data);
       let q7 = await inquirer.prompt({
         name: "loadMeta",
         type: "confirm",
-        message:chalk.yellow(`Would you like to use this data ?
+        message: chalk.yellow(`Would you like to use this data ?
 
-${JSON.stringify(metaData,null,2)}
+${JSON.stringify(metaData, null, 2)}
 
 
-`)
-      })
+`),
+      });
 
       if (q7.loadMeta) {
         let q6 = await inquirer.prompt({
@@ -293,69 +364,65 @@ ${JSON.stringify(metaData,null,2)}
           },
         });
         startIndex = q6.startIndex;
-         metaDataAnswers = metaData
-        resolve()
-      }else{
-         await metaDataQuestions(count)
-        resolve()
+        metaDataAnswers = metaData;
+        await getScreenSize()
+        resolve();
+      } else {
+        await metaDataQuestions(count);
+        resolve();
       }
-    })
-  })
-}
+    });
+  });
+};
 
 const saveMetaDataToFile = async (metaData = metaDataAnswers) => {
-  writeFileSync('./metadata.json', JSON.stringify(metaData), (err) => {
-    if (err) throw err
-  })
-}
+  writeFileSync("./metadata.json", JSON.stringify(metaData), (err) => {
+    if (err) throw err;
+  });
+};
 
 const readDirectory = async () => {
-
   let dir = __dirname;
   //console.log("directory", dir)
   let files = readdirSync(dir);
 
-  let { count, isMetadata } = await checkValidFiles(files)
-  let validFiles = files.filter((item) => supportedFiles.includes(extname(item)))
-  console.log(chalk.underline(`Found ${count} valid file/s.`))
+  let { count, isMetadata } = await checkValidFiles(files);
+  let validFiles = files.filter((item) =>
+    supportedFiles.includes(extname(item))
+  );
+  console.log(chalk.underline(`Found ${count} valid file/s.`));
   let filesToProcess = await inquirer.prompt({
     name: "filesToSkip",
     pageSize: 25,
     type: "checkbox",
     message: "Select files to process",
-    choices: validFiles
-  })
-  selectedFiles = filesToProcess.filesToSkip
+    choices: validFiles,
+  });
+  selectedFiles = filesToProcess.filesToSkip;
 
   if (isMetadata) {
-    await loadMetaDataFromFile(count)
+    await loadMetaDataFromFile(count);
   } else {
     await metaDataQuestions(count);
   }
 
-
-
   for (let i = 0; i < validFiles.length; i++) {
-
     let file = validFiles[i];
-    if (!selectedFiles.includes(file)) continue
+    if (!selectedFiles.includes(file)) continue;
 
-    const extractSpinner = createSpinner('Extracting files...').start()
+    const extractSpinner = createSpinner("Extracting files...").start();
     const isExtracted = await unZipFiles(join(dir, file), file);
-    if (isExtracted) extractSpinner.success()
+    if (isExtracted) extractSpinner.success();
 
-    const processSpinner = createSpinner('Processing files...').start()
+    const processSpinner = createSpinner("Processing files...").start();
     let isProcessed = await processImage(`./extracted/${file}`, file);
-    if (isProcessed) processSpinner.success()
+    if (isProcessed) processSpinner.success();
 
-    const convertingSpinner = createSpinner('Converting to epub...').start()
-   await convertToEpub(file, i);
-   convertingSpinner.success({ text: `${file} converted to epub 🍻` })
-
+    const convertingSpinner = createSpinner("Converting to epub...").start();
+    await convertToEpub(file, i);
+    convertingSpinner.success({ text: `${file} converted to epub 🍻` });
   }
 };
-
-
 
 await welcome();
 await readDirectory();
