@@ -128,7 +128,7 @@ const convertToEpub = async (filename, index) => {
   let cover = join(dir, files[0]);
   let images = files.map((file) => join(dir, file));
   //files.shift();
-  images.splice(0,1)
+  images.splice(0, 1);
   var metadata = {
     id: new Date(),
     cover: cover,
@@ -177,7 +177,7 @@ const convertToEpub = async (filename, index) => {
     )
     .then(async () => {
       rmSync(`./extracted/${filename}`, { recursive: true });
-     // await saveMetaDataToFile(metaDataAnswers);
+      // await saveMetaDataToFile(metaDataAnswers);
     });
 };
 
@@ -198,11 +198,15 @@ const unZipFiles = (filePath, filename) => {
 
 const getScreenSize = async () => {
   let kindle = metaDataAnswers.kindle;
- // console.log("getScreenSize",kindle)
+  // console.log("getScreenSize",kindle)
   switch (kindle) {
     case "Kindle Paperwhite 3/4/Voyage/Oasis":
       WIDTH = 1072;
       HEIGHT = 1448;
+      break;
+    case "Kindle Scribe":
+      WIDTH = 1860;
+      HEIGHT = 2480;
       break;
     case "Kindle Oasis 2/3":
       WIDTH = 1264;
@@ -295,6 +299,7 @@ const metaDataQuestions = async (count) => {
     type: "list",
     message: "Select your kindle",
     choices: [
+      "Kindle Scribe",
       "Kindle Paperwhite 3/4/Voyage/Oasis",
       "Kindle Oasis 2/3",
       "Kindle Paperwhite 1/2",
@@ -330,7 +335,7 @@ const metaDataQuestions = async (count) => {
     type: "confirm",
     message: "Would you like to save this metadata for future use ?",
   });
- // console.log("save to metadata:",q7.saveMeta)
+  // console.log("save to metadata:",q7.saveMeta)
   if (q7.saveMeta) {
     await saveMetaDataToFile();
   }
@@ -365,7 +370,7 @@ ${JSON.stringify(metaData, null, 2)}
         });
         startIndex = q6.startIndex;
         metaDataAnswers = metaData;
-        await getScreenSize()
+        await getScreenSize();
         resolve();
       } else {
         await metaDataQuestions(count);
