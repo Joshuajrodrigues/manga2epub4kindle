@@ -4,6 +4,7 @@
 ![image](https://user-images.githubusercontent.com/54748294/209908442-97182533-f92e-441e-96ef-523c940b0158.png)
 ![image](https://user-images.githubusercontent.com/54748294/209908482-086c5be7-2613-4f7c-80e3-0cb938e7d924.png)
 ![image](https://user-images.githubusercontent.com/54748294/209908521-91a9f917-5386-4a00-af77-f50fc22d7e54.png)
+![image](https://user-images.githubusercontent.com/54748294/209908663-6244cb96-7233-41bc-8728-186ff96d9059.png)
 
 ## A very light and simple terminal app in the making to convert all cbr manga to epub suitable for kindle devices.
 
