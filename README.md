@@ -1,6 +1,9 @@
 # manga2epub4kindle (BETA)
 
 ![image](https://user-images.githubusercontent.com/54748294/207400655-ab8cbd0c-a6d0-4431-b8ff-7dffac54b3d3.png)
+![image](https://user-images.githubusercontent.com/54748294/209908442-97182533-f92e-441e-96ef-523c940b0158.png)
+![image](https://user-images.githubusercontent.com/54748294/209908482-086c5be7-2613-4f7c-80e3-0cb938e7d924.png)
+![image](https://user-images.githubusercontent.com/54748294/209908521-91a9f917-5386-4a00-af77-f50fc22d7e54.png)
 
 ## A very light and simple terminal app in the making to convert all cbr manga to epub suitable for kindle devices.
 
