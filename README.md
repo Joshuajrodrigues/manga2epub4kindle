@@ -9,7 +9,10 @@
 1) Open you folder full of cbz/cbr files. 
 2) Open your terminal in your folder
 3) Type in npx manga2epub4kindle
-4) Profit !
+4) Follow insructions
+5) Profit.
+
+Metadata is stored in a JSON format in the same directory, this is done so that when a new volume/issue is released you dont have to type in the full data again. You can also convert in batches by selecting which files you want converted first.
 
 
 Current Features
@@ -22,6 +25,5 @@ Current Features
 
 TBD
 1) NEEDS TESTING ON OTHER KINDLE DEVICES
-2) NEEDS TO ADD SUPPORT FOR OTHER DEVICES
 3) NEED TO DO SOMETHING ABOUT ITS SPEED AND COMPRESSION RATE --improved but better is welcome
 4)PROVIDE A TORRENT CLIENT TO NYAA
