@@ -1,6 +1,6 @@
 {
   "name": "manga2epub4kindle",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Convert cbr/cbz manga files to epub for kindle.",
   "main": "index.js",
   "type": "module",
@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js"
   },
-  "keywords": [],
+  "keywords": ["kindle","epub","manga"],
   "bin": "index.js",
   "author": "Joshua J Rodrigues",
   "license": "GPL-3.0 license",
