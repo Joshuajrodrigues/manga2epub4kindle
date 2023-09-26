@@ -15,18 +15,23 @@ export const moveFilesToTopLevel = async (dir,filename) => {
             }
         } else {
             // Extract chapter number from the directory name.
-            const chapterMatch = /[cC]hapter (\d+|\d+\.5) .*/.exec(path.basename(dir));
+            const chapterMatch = /[cC]hapter (\d+) .*/.exec(basename(dir));
+            const chapterHalfMatch = /[cC]hapter (\d+)\.(\d+) .*/.exec(basename(dir));
             let newFileName;
 
             if (chapterMatch) {
                 // If there's a chapter number, prepend it to the filename.
                 newFileName = `${chapterMatch[1]}.${file}`;
+            } else if (chapterHalfMatch) {
+
+                 newFileName = `${chapterHalfMatch[1]}.${chapterHalfMatch[2]}0${file}`;
             } else {
                 newFileName = file;
             }
 
             // Rename and move the file to the top-level directory.
-            renameSync(filePath, path.join(`./extracted/${filename}`, newFileName));
+              renameSync(filePath, join(`./extracted/${filename}`, newFileName));
+            }
         }
     }
 }
