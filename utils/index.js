@@ -3,17 +3,35 @@ import path, { extname, join } from 'path'
 import { supportedFiles } from './constants.js';
 
 export const moveFilesToTopLevel = async (dir,filename) => {
-    const files = readdirSync(dir);
+ const files = readdirSync(dir);
+
     for (const file of files) {
         const filePath = path.join(dir, file);
-        if (statSync(filePath).isDirectory() ) {
-            await moveFilesToTopLevel(filePath,filename);
-         if(isEmpty(filePath)){
-             rmdirSync(filePath)
-         }
-        } else {
-            renameSync(filePath, path.join(`./extracted/${filename}`, file));
+        if (statSync(filePath).isDirectory()) {
+            await moveFilesToTopLevel(filePath, filename);
 
+            if(isEmpty(filePath)) {
+                rmdirSync(filePath);
+            }
+        } else {
+            // Extract chapter number from the directory name.
+            const chapterMatch = /[cC]hapter (\d+) .*/.exec(basename(dir));
+            const chapterHalfMatch = /[cC]hapter (\d+)\.(\d+) .*/.exec(basename(dir));
+            let newFileName;
+
+            if (chapterMatch) {
+                // If there's a chapter number, prepend it to the filename.
+                newFileName = `${chapterMatch[1]}.${file}`;
+            } else if (chapterHalfMatch) {
+
+                 newFileName = `${chapterHalfMatch[1]}.${chapterHalfMatch[2]}0${file}`;
+            } else {
+                newFileName = file;
+            }
+
+            // Rename and move the file to the top-level directory.
+              renameSync(filePath, join(`./extracted/${filename}`, newFileName));
+            }
         }
     }
 }

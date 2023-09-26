@@ -125,6 +125,18 @@ const convertToEpub = async (filename, index) => {
   //console.log("sequence",sequence,(metaDataAnswers.startIndex || 0),index)
   let dir = join(__dirname, `./extracted/${filename}`);
   let files = readdirSync(dir);
+  files.sort((a, b) => {
+    const partsA = a.split('.').map(part => parseInt(part, 10));
+    const partsB = b.split('.').map(part => parseInt(part, 10));
+
+    for (let i = 0; i < Math.min(partsA.length, partsB.length); i++) {
+        if (partsA[i] !== partsB[i]) {
+            return partsA[i] - partsB[i];
+        }
+    }
+
+    return partsA.length - partsB.length;
+  });
   let cover = join(dir, files[0]);
   let images = files.map((file) => join(dir, file));
   //files.shift();
